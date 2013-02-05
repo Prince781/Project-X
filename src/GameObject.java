@@ -1,5 +1,6 @@
 package game;
 
+import java.awt.*;
 import java.util.*;
 
 public class GameObject {
@@ -16,12 +17,18 @@ public class GameObject {
 			x+=deltaX;
 			y+=deltaY;
 		}
+		public Rectangle toRectangle() {
+			return new Rectangle((int)x,(int)y,(int)width,(int)height);
+		}
 	}
 	public final class GameObjectColor {
 		public int r = 255;
 		public int g = 255;
 		public int b = 255;
 		public int a = 255;
+		public Color toColor() {
+			return new Color(r,g,b,a);
+		}
 		public void randomize() {
 			Random rand = new Random();
 			r = rand.nextInt(255);
@@ -29,12 +36,47 @@ public class GameObject {
 			b = rand.nextInt(255);
 			a = rand.nextInt(255);
 		}
+		public GameObjectColor setColor(int...clr) {
+			if (clr.length==1) r = clr[0];
+			if (clr.length==2) g = clr[1];
+			if (clr.length==3) b = clr[2];
+			if (clr.length==4) a = clr[3];
+			return this;
+		}
+	}
+	public final class GameObjectEvent {
+		public long mouseOverStarted = 0;
+		public long mouseClickStarted = 0;
+		public boolean mouseIsOver(Point p) {
+			return (type=="circle"?transform.distanceFrom(p.x, p.y)<=transform.r:((p.x-transform.x<=transform.width&&p.x-transform.x>=0)||(p.y-transform.y<=transform.height&&p.y-transform.y>=0)));
+		}
 	}
 	public final GameObjectTransform transform = new GameObjectTransform();
 	public final GameObjectColor color = new GameObjectColor();
+	public final GameObjectEvent event = new GameObjectEvent();
+	public String[] attributes;
 	final String type;
 	public boolean visible = true;
-	public GameObject(String gameObjectType) {
+	public void render(Graphics2D g, boolean fill) { //simplify drawing process
+		g.setColor(color.toColor());
+		switch (type) {
+		case "rect":
+			if (fill) g.fillRect((int)transform.x, (int)transform.y, (int)transform.width, (int)transform.height);
+			else g.drawRect((int)transform.x, (int)transform.y, (int)transform.width, (int)transform.height);
+			break;
+		case "circle":
+			if (fill) g.fillRect((int)transform.x, (int)transform.y, (int)transform.width, (int)transform.height);
+			else g.drawRect((int)transform.x, (int)transform.y, (int)transform.width, (int)transform.height);
+			break;
+		case "roundedRect":
+			if (fill) g.fillRoundRect((int)transform.x, (int)transform.y, (int)transform.width, (int)transform.height, 10, 10);
+			else g.drawRoundRect((int)transform.x, (int)transform.y, (int)transform.width, (int)transform.height, 10, 10);
+			break;
+		}
+	}
+	public GameObject(String gameObjectType, String ...attrs) {
 		type = gameObjectType;
+		attributes = new String[attrs.length];
+		for (int a=0; a<attrs.length; a++) attributes[a] = attrs[a];
 	}
 }
