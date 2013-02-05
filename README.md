@@ -12,9 +12,9 @@ Using `java.awt.Canvas` along with `java.awt.Graphics2D`, the project simply ren
 This should run in any Java Virtual Machine (JVM) on Windows, Mac OS X, and most Linux distributions with a version ≥ 7 (although it might work on versions 3 ≤ 6, but I haven't tested for those platforms). Generally, it is probably a good idea to run this in Java 7.
 
 ####TODO List
-* Implement scheduled drawing system for Canvas \(**mostly**\)
-* Implement main menu \(**todo**\)
-* Set game object instantiation system \(**todo**\)
+* Implement scheduled drawing system for Canvas \( **done** \)
+* Implement main menu \( **done** \)
+* Set game object instantiation system \( **done** \)
 
 ###Collaborators
 * Princeton Ferro (me; mostly code, instructions)

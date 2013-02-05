@@ -82,10 +82,11 @@ public class ProbabilityGame extends Thread {
 		}
 	}
 	private ArrayList<GameButton> menuButtons = new ArrayList<GameButton>(); //list of menu buttons
+	int menuOverallOpacity = 255;
 	//main menu values
 	//other values
 		private final long second_n = (long)Math.pow(10, 9); //divide by this to get seconds
-		private final long msecond_n = (long)Math.pow(10, 5); //divide by this to get milliseconds
+		private final long msecond_n = (long)Math.pow(10, 6); //divide by this to get milliseconds
 		private boolean mouseHasMoved = false;
 		private boolean mouseHasClicked = false;
 		private Point mouseMovePosition;
@@ -99,7 +100,8 @@ public class ProbabilityGame extends Thread {
 		
 		canvas = new Canvas(cfg);
 		canvas.setSize(window.getBounds().getSize());
-		canvas.addMouseMotionListener(new MoveMouse());
+		canvas.addMouseMotionListener(new MouseAction());
+		canvas.addMouseListener(new MouseAction());
 		window.add(canvas, 0);
 		window.setVisible(true); //show the window
 		window.setResizable(false);
@@ -121,7 +123,7 @@ public class ProbabilityGame extends Thread {
 			System.out.println("Exited successfully.");
 		}
 	}
-	private class MoveMouse extends MouseAdapter { //check for mouse events
+	private class MouseAction extends MouseAdapter { //check for mouse events
 		@Override
 		public void mouseMoved(MouseEvent e) {
 			//get move event data
@@ -189,57 +191,107 @@ public class ProbabilityGame extends Thread {
 		menuVisible = true; //set menu visible (important)
 	}
 	public void gameStart() { //start the game aspect; populate
-		for (int i=0; i<10; i++) {
+		if (gameStarted) return;
+		for (int i=0; i<9; i++) {
 			Random rand = new Random();
-			int rd = rand.nextInt(max_circle_n); //circle's radius
+			int rd = 2+rand.nextInt(max_circle_n-4); //circle's radius
 			GameCircle circ = new GameCircle(rd, 1+rand.nextInt(rd-1));
-			circ.transform.x = rand.nextInt(d[0]);
-			circ.transform.y = rand.nextInt(d[1]);
+			circ.transform.x = max_circle_n*10+rand.nextInt(d[0]-2*max_circle_n*10);
+			circ.transform.y = max_circle_n*(int)Math.floor(Math.sqrt(i-1))
+					+rand.nextInt(d[1]-3*max_circle_n*5);
 			circ.color.randomize();
+			circ.color.a = 100;
 			gameObjects.add(circ);
 		}
 		gameStarted = true;
 		menuFadeTime = System.nanoTime();
+		//save menu item color states
+		for (GameButton gB:menuButtons)
+			gB.color.saveColor();
+		System.out.println("Game has started");
 	}
 	public void gameUpdate() { //update game aspect, but don't render
-		if (menuVisible) {
-			//TODO: buttons
-			
-		}
-		if (gameStarted) {
+		if (menuFadeTime != 0) { //fade away the menu
+			if ((long)(System.nanoTime()-menuFadeTime)/msecond_n < 800) {
+				double delta = (double)(System.nanoTime()-menuFadeTime)/msecond_n/800;
+				menuOverallOpacity = (int)(255 * (1-Math.pow(delta, 3)));
+				for (GameButton gB:menuButtons) //iterate through all menu buttons and their colors
+					gB.color.a = (int)(gB.color.savedColor().getAlpha() * (1-Math.pow(delta, 3)));
+			} else menuVisible = false;
+		} else if (menuVisible) 
+			for (GameButton gB:menuButtons) { //iterate through all menu buttons
+				if (gB.event.mouseOverStarted != 0 //fade in/out button animation
+					&& (long)(System.nanoTime()-gB.event.mouseOverStarted)/msecond_n < 700) {
+					gB.event.mouseOutStarted = 0;
+					double delta = (double)(System.nanoTime()-gB.event.mouseOverStarted)/msecond_n/700;
+					gB.color.a = gB.color.savedColor().getAlpha() + (int)((80-gB.color.savedColor().getAlpha()) * Math.pow(delta, 3)); //opacity fading
+				} else gB.event.mouseOverStarted = 0;
+				if (gB.event.mouseOutStarted != 0 //mouse out event
+					&& (long)(System.nanoTime()-gB.event.mouseOutStarted)/msecond_n < 700) {
+					gB.event.mouseOverStarted = 0;
+					double delta = (double)(System.nanoTime()-gB.event.mouseOutStarted)/msecond_n/700;
+					gB.color.a = gB.color.savedColor().getAlpha() + (int)((56-gB.color.savedColor().getAlpha()) * Math.pow(delta, 3));
+				} else gB.event.mouseOutStarted = 0;
+			}
+		if (gameStarted)
 			for (GameCircle gc:gameObjects) { //iterate through all game circles
 				//TODO: iteration
 				
 				//animation and events
 				if (gc.event.mouseOverStarted != 0 //fade out animation
-						&& (long)(System.nanoTime()-gc.event.mouseOverStarted)/msecond_n < 1200) {
-					long delta = (System.nanoTime()-gc.event.mouseOverStarted)/1200;
-					gc.color.a = 255 * (int)(1-Math.pow(delta, 3)); //opacity toggling
-				} else {
+						&& (long)(System.nanoTime()-gc.event.mouseOverStarted)/msecond_n < 2200) {
+					gc.event.mouseOutStarted =0;
+					double delta = (double)((System.nanoTime()-gc.event.mouseOverStarted)/msecond_n)/2200;
+					gc.color.a = gc.color.savedColor().getAlpha() + (int)((200-gc.color.savedColor().getAlpha()) * Math.pow(delta, 3));
+				} else gc.event.mouseOverStarted = 0;
+				if (gc.event.mouseOutStarted != 0 
+						&& (long)(System.nanoTime()-gc.event.mouseOutStarted)/msecond_n < 2200) {
 					gc.event.mouseOverStarted = 0;
-				}
+					double delta = (double)((System.nanoTime()-gc.event.mouseOutStarted)/msecond_n)/2200;
+					gc.color.a = gc.color.savedColor().getAlpha() + (int)((100-gc.color.savedColor().getAlpha()) * Math.pow(delta, 3));
+					
+				} else gc.event.mouseOutStarted = 0;
 			}
-		}
 		if (mouseHasMoved) {
-			if (gameStarted)
-				for (GameCircle gc:gameObjects) //perform a search; do stuff
-					if (gc.visible && gc.event.mouseIsOver(mouseMovePosition)) {
-						if (gc.event.mouseOverStarted == 0)
-							gc.event.mouseOverStarted = System.nanoTime(); //log start time
+			if (menuVisible)
+				for (GameButton gB:menuButtons) { //perform menuButton search
+					if (gB.visible 
+							&& gB.event.mouseIsOver(mouseMovePosition)
+							&& gB.event.mouseOverStarted == 0) {
+						gB.event.mouseOverStarted = System.nanoTime(); //log start time
+						gB.color.saveColor(); //save object color at this point
+					} else if (gB.visible 
+							&& !gB.event.mouseIsOver(mouseMovePosition)
+							&& gB.event.mouseOutStarted == 0) {
+						gB.event.mouseOutStarted = System.nanoTime();
+						gB.color.saveColor(); //save object color
 					}
-			
+				}
+			else if (gameStarted)
+				for (GameCircle gc:gameObjects) { //perform a search; do stuff
+					if (gc.visible 
+							&& gc.event.mouseIsOver(mouseMovePosition) 
+							&& gc.event.mouseOverStarted == 0) {
+						gc.event.mouseOverStarted = System.nanoTime(); //log start time
+						gc.color.saveColor(); //save object color
+					} else if (gc.visible 
+							&& !gc.event.mouseIsOver(mouseMovePosition) 
+							&& gc.event.mouseOutStarted == 0) {
+						gc.event.mouseOutStarted = System.nanoTime();
+						gc.color.saveColor(); //save object color
+					}
+				}
 			mouseHasMoved = false;
 		}
 		if (mouseHasClicked) {
-			//TODO: code
-			if (menuVisible)
-				for (GameButton gB:menuButtons) {
-					if (gB.visible && gB.event.mouseIsOver(mouseClickPosition)) {
-						if (gB.buttonText == "Play Now") {
-							
-						}
-					}
-				}
+			if (menuVisible && menuFadeTime == 0)
+				for (GameButton gB:menuButtons)
+					if (gB.visible && gB.event.mouseIsOver(mouseClickPosition))
+						if (gB.buttonText == "Play Now")
+							gameStart(); //start the game
+			if (gameStarted) {
+				//TODO: gameStarted code
+			}
 			mouseHasClicked = false;
 		}
 	}
@@ -249,19 +301,17 @@ public class ProbabilityGame extends Thread {
 		g.setColor(Color.black); //paint black background for effective antialiasing
 		g.fillRect(0, 0, d[0], d[1]);
 		if (menuVisible) { //render main menu
-			g.setColor(new Color(230,245,255,250)); //render big title
+			g.setColor(new Color(230,245,255,menuOverallOpacity)); //render big title
 			g.setFont(new Font("Consolas", 300, 60));
 			g.drawString("Project X", (int)(d[0]-300)/2, 200);
 			for (GameButton gB:menuButtons) { //iterate through menuButtons
 				gB.render(g, true);
 				gB.renderText(g, 9, 28, new Font("Arial",(int)gB.transform.width-10,(int)gB.transform.height-20));
 			}
-		}
-		if (gameStarted)
-			for (GameCircle gc:gameObjects) { //iterate through all circles on display
-				g.setColor(gc.color.toColor());
+		} else if (gameStarted) {
+			for (GameCircle gc:gameObjects) //iterate through all circles on display
 				gc.render(g, true);
-			}
+		}
 	}
 	public static void main(String[] args) {
 		new ProbabilityGame();
