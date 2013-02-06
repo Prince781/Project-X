@@ -82,8 +82,8 @@ public class GameObject {
 			else g.drawRect((int)transform.x, (int)transform.y, (int)transform.width, (int)transform.height);
 			break;
 		case "circle":
-			if (fill) g.fillArc((int)transform.x, (int)transform.y, (int)transform.r, (int)transform.r, 0, 360);
-			else g.drawArc((int)transform.x, (int)transform.y, (int)transform.r, (int)transform.r, 0, 360);
+			if (fill) g.fillArc((int)transform.x-(int)transform.r/2, (int)transform.y-(int)transform.r/2, (int)transform.r, (int)transform.r, 0, 360);
+			else g.drawArc((int)transform.x-(int)transform.r/2, (int)transform.y-(int)transform.r/2, (int)transform.r, (int)transform.r, 0, 360);
 			break;
 		case "roundedRect":
 			if (fill) g.fillRoundRect((int)transform.x, (int)transform.y, (int)transform.width, (int)transform.height, 10, 10);
