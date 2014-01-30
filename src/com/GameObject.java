@@ -1,4 +1,4 @@
-package game;
+package com;
 
 import java.awt.*;
 import java.util.*;

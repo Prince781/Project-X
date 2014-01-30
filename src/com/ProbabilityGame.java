@@ -9,7 +9,7 @@
  * ------------------------------------
  * 2013 P. Ferro & D. Casazz
 ****************************************/
-package game;
+package com;
 
 import java.awt.*;
 import java.awt.event.*;
